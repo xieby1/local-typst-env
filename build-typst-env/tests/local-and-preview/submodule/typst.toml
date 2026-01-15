@@ -1,0 +1,4 @@
+[package]
+name = "submodule"
+version = "0.0.3"
+entrypoint = "main.typ"
