@@ -1,5 +1,13 @@
 let
-  pkgs = import <nixpkgs> {};
+  # The preview package version and its dependencies vary across different nixpkgs versions.
+  # To ensure consistent behavior, we pin nixpkgs to a specific version.
+  # Here we pin to the latest nixpkgs 25.11 release.
+  pkgs = import ((import <nixpkgs> {}).fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
+    rev = "2c3e5ec5df46d3aeee2a1da0bfedd74e21f4bf3a";
+    hash = "sha256-yBXJLE6WCtrGo7LKiB6NOt6nisBEEkguC/lq/rP3zRQ=";
+  }) {};
   utils = pkgs.callPackage ../utils.nix {};
 in pkgs.lib.runTests {
   # First, we check their approach (current typst.withPackages) only includes direct dependencies.
