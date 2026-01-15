@@ -1,8 +1,8 @@
 let
   pkgs = import <nixpkgs> {};
-  buildLocalTypstPackage = pkgs.callPackages ../.. {};
+  buildLocalTypstPackage = pkgs.callPackage ../.. {};
   dummy = buildLocalTypstPackage { src = ./src; };
-in {
+in pkgs.lib.runTests {
   test-pname = {
     expr = dummy.pname;
     expected = "dummy";
