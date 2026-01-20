@@ -9,27 +9,31 @@ let
     hash = "sha256-yBXJLE6WCtrGo7LKiB6NOt6nisBEEkguC/lq/rP3zRQ=";
   }) {};
   utils = pkgs.callPackage ../utils.nix {};
-
-  buildLocalTypstEnv = pkgs.callPackage ../../.. {};
-  subsubmodule = buildLocalTypstEnv { src = ./subsubmodule; };
-  submodule = buildLocalTypstEnv { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
-  module = buildLocalTypstEnv { src = ./module; propagatedBuildInputs = [submodule]; };
-
-  typst-env = buildLocalTypstEnv {
-    src = ./.;
-    propagatedBuildInputs = [
-      module
-      pkgs.typstPackages.academic-conf-pre
-    ];
-  };
 in pkgs.lib.runTests {
-  test = pkgs.lib.testAllTrue [
-    (utils.lists-eq (utils.get-typst-packages typst-env.TYPST_PACKAGE_PATH "local") [
-      "module/0.1.0"
-        "submodule/0.0.3"
-          "subsubmodule/0.0.99"
-    ])
-    (utils.lists-eq (utils.get-typst-packages typst-env.TYPST_PACKAGE_PATH "preview") [
+  # First, we check their approach (current typst.withPackages) only includes direct dependencies.
+  test-their = let
+    typst = pkgs.typst.withPackages (p: [p.academic-conf-pre]);
+    packages = utils.get-typst-packages typst "lib/typst/packages/preview";
+  in {
+    expr = utils.lists-eq packages [
+      "academic-conf-pre/0.1.0"
+        "cuti/0.2.1"
+        "touying/0.4.2"
+        "unify/0.6.0"
+    ];
+    expected = true;
+  };
+
+  # The, we check our approach includes all direct and indirect dependencies
+  test-our = let
+    buildTypstEnv = pkgs.callPackage ../.. {};
+    only-preview-env = buildTypstEnv {
+      src = ./.;
+      propagatedBuildInputs = [ pkgs.typstPackages.academic-conf-pre ];
+    };
+    typst-packages = utils.get-typst-packages only-preview-env.TYPST_PACKAGE_PATH "preview";
+  in {
+    expr = utils.lists-eq typst-packages [
       "academic-conf-pre/0.1.0"
         "cuti/0.2.1"
           "sourcerer/0.2.1"
@@ -49,6 +53,7 @@ in pkgs.lib.runTests {
                   "oxifmt/0.2.0"
                 "tidy/0.1.0"
         "unify/0.6.0"
-    ])
-  ];
+    ];
+    expected = true;
+  };
 }
