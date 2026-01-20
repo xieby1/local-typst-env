@@ -12,8 +12,8 @@ let
 
   buildLocalTypstPackage = pkgs.callPackage ../../../build-local-typst-package {};
   subsubmodule = buildLocalTypstPackage { src = ./subsubmodule; };
-  submodule = buildLocalTypstPackage { src = ./submodule; typstDeps = [subsubmodule]; };
-  module = buildLocalTypstPackage { src = ./module; typstDeps = [submodule]; };
+  submodule = buildLocalTypstPackage { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
+  module = buildLocalTypstPackage { src = ./module; propagatedBuildInputs = [submodule]; };
 
   buildTypstEnv = pkgs.callPackage ../.. {};
   typst-env = buildTypstEnv {

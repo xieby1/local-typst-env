@@ -4,7 +4,7 @@ let
   submodule = buildLocalTypstPackage { src = ./submodule; };
   module = buildLocalTypstPackage {
     src = ./module;
-    typstDeps = [ submodule pkgs.typstPackages.academic-conf-pre ];
+    propagatedBuildInputs = [ submodule pkgs.typstPackages.academic-conf-pre ];
   };
 in pkgs.lib.runTests {
   test-deps = {

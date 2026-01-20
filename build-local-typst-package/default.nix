@@ -1,9 +1,8 @@
-{ lib, stdenvNoCC }: lib.extendMkDerivation {
+{ lib, stdenvNoCC, runCommand }: lib.extendMkDerivation {
   constructDrv = stdenvNoCC.mkDerivation;
-  excludeDrvArgNames = ["typstDeps"];
-  extendDrvArgs = finalAttrs: let
+  extendDrvArgs = finalAttrs: prevAttrs: let
     typst_toml = lib.importTOML (finalAttrs.src + /typst.toml);
-  in { typstDeps ? [], ... }: {
+  in {
     pname = typst_toml.package.name;
     version = typst_toml.package.version;
     name = "typst-local-package-${finalAttrs.pname}-${finalAttrs.version}";
@@ -16,7 +15,5 @@
       cp -r . ${outDir}
       runHook postInstall
     '';
-    propagatedBuildInputs = typstDeps;
-    passthru = { inherit typstDeps; };
   };
 }
