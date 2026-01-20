@@ -1,0 +1,4 @@
+[package]
+name = "local-and-preview"
+version = "0.1.0"
+entrypoint = "main.typ"

@@ -17,7 +17,7 @@
     '';
 
     TYPST_PACKAGE_PATH = toString (runCommand "TYPST_PACKAGE_PATH" {
-      buildInputs = finalAttrs.propagatedBuildPints or [];
+      buildInputs = finalAttrs.propagatedBuildInputs or [];
     } ''
       symlink_typst_packages() {
         src="$1"

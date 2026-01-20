@@ -26,11 +26,12 @@ in pkgs.lib.runTests {
 
   # The, we check our approach includes all direct and indirect dependencies
   test-our = let
-    buildTypstEnv = pkgs.callPackage ../.. {};
+    buildTypstEnv = pkgs.callPackage ../../.. {};
     only-preview-env = buildTypstEnv {
-      typstPkgs = [ pkgs.typstPackages.academic-conf-pre ];
+      src = ./.;
+      propagatedBuildInputs = [ pkgs.typstPackages.academic-conf-pre ];
     };
-    typst-packages = utils.get-typst-packages only-preview-env "preview";
+    typst-packages = utils.get-typst-packages only-preview-env.TYPST_PACKAGE_PATH "preview";
   in {
     expr = utils.lists-eq typst-packages [
       "academic-conf-pre/0.1.0"

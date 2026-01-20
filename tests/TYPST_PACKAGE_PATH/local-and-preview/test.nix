@@ -15,21 +15,22 @@ let
   submodule = buildLocalTypstPackage { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
   module = buildLocalTypstPackage { src = ./module; propagatedBuildInputs = [submodule]; };
 
-  buildTypstEnv = pkgs.callPackage ../.. {};
-  typst-env = buildTypstEnv {
-    typstPkgs = [
+  # TODO: unify name
+  typst-env = buildLocalTypstPackage {
+    src = ./.;
+    propagatedBuildInputs = [
       module
       pkgs.typstPackages.academic-conf-pre
     ];
   };
 in pkgs.lib.runTests {
   test = pkgs.lib.testAllTrue [
-    (utils.lists-eq (utils.get-typst-packages typst-env "local") [
+    (utils.lists-eq (utils.get-typst-packages typst-env.TYPST_PACKAGE_PATH "local") [
       "module/0.1.0"
         "submodule/0.0.3"
           "subsubmodule/0.0.99"
     ])
-    (utils.lists-eq (utils.get-typst-packages typst-env "preview") [
+    (utils.lists-eq (utils.get-typst-packages typst-env.TYPST_PACKAGE_PATH "preview") [
       "academic-conf-pre/0.1.0"
         "cuti/0.2.1"
           "sourcerer/0.2.1"
