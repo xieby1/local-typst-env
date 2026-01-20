@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, runCommand }: lib.extendMkDerivation {
+{ lib, stdenvNoCC, runCommand, buildEnv }: lib.extendMkDerivation {
   constructDrv = stdenvNoCC.mkDerivation;
   extendDrvArgs = finalAttrs: prevAttrs: let
     typst_toml = lib.importTOML (finalAttrs.src + /typst.toml);
@@ -16,8 +16,10 @@
       runHook postInstall
     '';
 
-    TYPST_PACKAGE_PATH = toString (runCommand "TYPST_PACKAGE_PATH" {
-      buildInputs = finalAttrs.propagatedBuildInputs or [];
+    # Currently why TYPST_PACKAGE_PATH cannot use buildEnv?
+    # Because: lib/typst-packages/ and lib/typst-local-packages/ need to be rename when symlink
+    TYPST_PACKAGE_PATH = runCommand "TYPST_PACKAGE_PATH" {
+      buildInputs = finalAttrs.propagatedBuildInputs or [] ++ finalAttrs.buildInputs or [];
     } ''
       symlink_typst_packages() {
         src="$1"
@@ -42,6 +44,14 @@
         symlink_typst_packages $p/lib/typst-packages/       $out/preview/
         symlink_typst_packages $p/lib/typst-local-packages/ $out/local/
       done
-    '');
+    '';
+
+    TYPST_IGNORE_SYSTEM_FONTS="true";
+    TYPST_FONT_PATHS = buildEnv {
+      name = "TYPST_FONT_PATHS";
+      paths = finalAttrs.propagatedBuildInputs or [] ++ finalAttrs.buildInputs or [];
+      includeClosures = true;
+      pathsToLink  = [ "/share/fonts" ];
+    };
   };
 }

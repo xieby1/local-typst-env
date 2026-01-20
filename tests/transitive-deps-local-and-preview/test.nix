@@ -11,7 +11,7 @@ let
   utils = pkgs.callPackage ../utils.nix {};
 
   buildLocalTypstEnv = pkgs.callPackage ../.. {};
-  subsubmodule = buildLocalTypstEnv { src = ./subsubmodule; };
+  subsubmodule = buildLocalTypstEnv { src = ./subsubmodule; propagatedBuildInputs = [pkgs.noto-fonts]; };
   submodule = buildLocalTypstEnv { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
   module = buildLocalTypstEnv { src = ./module; propagatedBuildInputs = [submodule]; };
 
@@ -50,5 +50,6 @@ in pkgs.lib.runTests {
                 "tidy/0.1.0"
         "unify/0.6.0"
     ])
+    (builtins.readDir (typst-env.TYPST_FONT_PATHS + "/share/fonts") ? noto)
   ];
 }
