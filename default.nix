@@ -24,6 +24,7 @@
       postBuild = ''
         mv $out/lib/typst-packages $out/preview
         mv $out/lib/typst-local-packages $out/local
+        rmdir $out/lib
       '';
     };
 
