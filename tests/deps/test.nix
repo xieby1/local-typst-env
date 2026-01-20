@@ -1,8 +1,8 @@
 let
   pkgs = import <nixpkgs> {};
-  buildLocalTypstPackage = pkgs.callPackage ../.. {};
-  submodule = buildLocalTypstPackage { src = ./submodule; };
-  module = buildLocalTypstPackage {
+  buildLocalTypstEnv = pkgs.callPackage ../.. {};
+  submodule = buildLocalTypstEnv { src = ./submodule; };
+  module = buildLocalTypstEnv {
     src = ./module;
     propagatedBuildInputs = [ submodule pkgs.typstPackages.academic-conf-pre ];
   };

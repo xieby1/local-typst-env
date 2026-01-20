@@ -1,7 +1,7 @@
 let
   pkgs = import <nixpkgs> {};
-  buildLocalTypstPackage = pkgs.callPackage ../.. {};
-  dummy = buildLocalTypstPackage { src = ./src; };
+  buildLocalTypstEnv = pkgs.callPackage ../.. {};
+  dummy = buildLocalTypstEnv { src = ./src; };
 in pkgs.lib.runTests {
   test-pname = {
     expr = dummy.pname;

@@ -10,13 +10,12 @@ let
   }) {};
   utils = pkgs.callPackage ../utils.nix {};
 
-  buildLocalTypstPackage = pkgs.callPackage ../../.. {};
-  subsubmodule = buildLocalTypstPackage { src = ./subsubmodule; };
-  submodule = buildLocalTypstPackage { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
-  module = buildLocalTypstPackage { src = ./module; propagatedBuildInputs = [submodule]; };
+  buildLocalTypstEnv = pkgs.callPackage ../../.. {};
+  subsubmodule = buildLocalTypstEnv { src = ./subsubmodule; };
+  submodule = buildLocalTypstEnv { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
+  module = buildLocalTypstEnv { src = ./module; propagatedBuildInputs = [submodule]; };
 
-  # TODO: unify name
-  typst-env = buildLocalTypstPackage {
+  typst-env = buildLocalTypstEnv {
     src = ./.;
     propagatedBuildInputs = [
       module
