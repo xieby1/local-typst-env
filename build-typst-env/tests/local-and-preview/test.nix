@@ -10,7 +10,7 @@ let
   }) {};
   utils = pkgs.callPackage ../utils.nix {};
 
-  buildLocalTypstPackage = pkgs.callPackage ../../../build-local-typst-package {};
+  buildLocalTypstPackage = pkgs.callPackage ../../.. {};
   subsubmodule = buildLocalTypstPackage { src = ./subsubmodule; };
   submodule = buildLocalTypstPackage { src = ./submodule; propagatedBuildInputs = [subsubmodule]; };
   module = buildLocalTypstPackage { src = ./module; propagatedBuildInputs = [submodule]; };
