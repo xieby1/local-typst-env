@@ -16,35 +16,16 @@
       runHook postInstall
     '';
 
-    # Currently why TYPST_PACKAGE_PATH cannot use buildEnv?
-    # Because: lib/typst-packages/ and lib/typst-local-packages/ need to be rename when symlink
-    TYPST_PACKAGE_PATH = runCommand "TYPST_PACKAGE_PATH" {
-      buildInputs = finalAttrs.propagatedBuildInputs or [] ++ finalAttrs.buildInputs or [];
-    } ''
-      symlink_typst_packages() {
-        src="$1"
-        dst="$2"
-        if [[ -d $src ]]; then
-          #                      mod ver
-          #                        | |
-          for path_mod_ver in $src/*/*; do
-            mod=$(basename $(dirname $path_mod_ver))
-            # Why mkdir .../mod?
-            # Because the dependencies may have same mod but different vers.
-            # If only ln -s mod, we will lose dependencies.
-            mkdir -p $dst/$mod
-            ln -s $path_mod_ver $dst/$mod/
-          done
-        fi
-      }
-      # Is this `mkdir -p $out` redundant?
-      # No. Because: pkgsHostTarget may be empty, so the for loop below may not be executed.
-      mkdir -p $out
-      for p in "''${pkgsHostTarget[@]}"; do
-        symlink_typst_packages $p/lib/typst-packages/       $out/preview/
-        symlink_typst_packages $p/lib/typst-local-packages/ $out/local/
-      done
-    '';
+    TYPST_PACKAGE_PATH = buildEnv {
+      name = "TYPST_PACKAGE_PATH";
+      paths = finalAttrs.propagatedBuildInputs or [] ++ finalAttrs.buildInputs or [];
+      includeClosures = true;
+      pathsToLink  = [ "/lib/typst-packages" "/lib/typst-local-packages" ];
+      postBuild = ''
+        mv $out/lib/typst-packages $out/preview
+        mv $out/lib/typst-local-packages $out/local
+      '';
+    };
 
     TYPST_IGNORE_SYSTEM_FONTS="true";
     TYPST_FONT_PATHS = buildEnv {
