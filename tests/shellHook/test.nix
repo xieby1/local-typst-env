@@ -10,16 +10,10 @@ let
     '';
   };
 in pkgs.lib.runTests {
-  test-miao = {
-    expr = builtins.readFile (dummy + "/miao");
-    expected = ''
-      miao miao
-    '';
-  };
-  test-TYPST_ROOT = {
-    # The value is "/build/src/\n", but may be different is different platform.
-    # So only check whether it is empty.
-    expr = builtins.readFile (dummy + "/TYPST_ROOT") != "";
-    expected= true;
+  # `shellHook` should not be run in nix-build, `shellHook` shall only be run during nix-shell
+  # Therefore, there is no miao and TYPST_ROOT in `builtins.readDir dummy`.
+  test-dir = {
+    expr = builtins.readDir dummy;
+    expected = {lib = "directory";};
   };
 }

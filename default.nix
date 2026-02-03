@@ -2,20 +2,12 @@
   constructDrv = stdenvNoCC.mkDerivation;
   extendDrvArgs = finalAttrs: prevAttrs: let
     typst_toml = lib.importTOML (finalAttrs.src + /typst.toml);
+    set-TYPST_ROOT = "export TYPST_ROOT=$(realpath .)";
   in {
     pname = typst_toml.package.name;
     version = typst_toml.package.version;
     name = "typst-local-package-${finalAttrs.pname}-${finalAttrs.version}";
     dontBuild = true;
-
-    # Why use `shellHook = "export TYPST_ROOT=$(realpath .)"` instead of `TYPST_ROOT=finalAttrs.src`?
-    # For better development experience in nix-shell.
-    # When developing in nix-shell, you frequently edit *.typ files in $TYPST_ROOT.
-    # If we use `finalAttrs.src` (TYPST_ROOT=/nix/store/...), you would need to refresh nix-shell after every edit to *.typ files.
-    # With `shellHook` (TYPST_ROOT=/home/...), you can edit files freely without worrying about nix-shell refreshes.
-    shellHook = ''
-      export TYPST_ROOT=$(realpath .)
-    '' + (prevAttrs.shellHook or ""); # Make sure the user provided `shellHook` also works
 
     # If typst_toml contains "[template]" section,
     # then add a template output.
@@ -24,7 +16,7 @@
     installPhase = let
       outDir = "$out/lib/typst-local-packages/${finalAttrs.pname}/${finalAttrs.version}";
     in ''
-      runHook shellHook
+      ${set-TYPST_ROOT}
       runHook preInstall
       mkdir -p ${outDir}
       cp -r . ${outDir}
@@ -39,6 +31,15 @@
     '' + ''
       runHook postInstall
     '';
+
+    # Why use `shellHook = "export TYPST_ROOT=$(realpath .)"` instead of `TYPST_ROOT=finalAttrs.src`?
+    # For better development experience in nix-shell.
+    # When developing in nix-shell, you frequently edit *.typ files in $TYPST_ROOT.
+    # If we use `finalAttrs.src` (TYPST_ROOT=/nix/store/...), you would need to refresh nix-shell after every edit to *.typ files.
+    # With `shellHook` (TYPST_ROOT=/home/...), you can edit files freely without worrying about nix-shell refreshes.
+    shellHook = ''
+      ${set-TYPST_ROOT}
+    '' + (prevAttrs.shellHook or ""); # Make sure the user provided `shellHook` also works
 
     TYPST_PACKAGE_PATH = buildEnv {
       name = "TYPST_PACKAGE_PATH";
