@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, runCommand, buildEnv }: lib.extendMkDerivation {
+{ lib, stdenvNoCC, buildEnv, typst }: lib.extendMkDerivation {
   constructDrv = stdenvNoCC.mkDerivation;
   extendDrvArgs = finalAttrs: prevAttrs: let
     typst_toml = lib.importTOML (finalAttrs.src + /typst.toml);
@@ -17,6 +17,10 @@
       export TYPST_ROOT=$(realpath .)
     '' + (prevAttrs.shellHook or ""); # Make sure the user provided `shellHook` also works
 
+    # If typst_toml contains "[template]" section,
+    # then add a template output.
+    outputs = ["out"] ++ lib.optional (typst_toml?template) "template";
+
     installPhase = let
       outDir = "$out/lib/typst-local-packages/${finalAttrs.pname}/${finalAttrs.version}";
     in ''
@@ -24,6 +28,15 @@
       runHook preInstall
       mkdir -p ${outDir}
       cp -r . ${outDir}
+    ''
+    # If typst_toml contains "[template]" section,
+    # then compile the template.entrypoint (.typ) to $template/entrypoint (.pdf).
+    + lib.optionalString (typst_toml?template) ''
+      mkdir -p $template
+      ${typst}/bin/typst compile \
+        ${typst_toml.template.path}/${typst_toml.template.entrypoint} \
+        $template/${lib.removeSuffix ".typ" (baseNameOf typst_toml.template.entrypoint)}.pdf
+    '' + ''
       runHook postInstall
     '';
 
