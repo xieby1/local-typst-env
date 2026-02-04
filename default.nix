@@ -9,10 +9,6 @@
     name = "typst-local-package-${finalAttrs.pname}-${finalAttrs.version}";
     dontBuild = true;
 
-    # If typst_toml contains "[template]" section,
-    # then add a template output.
-    outputs = ["out"] ++ lib.optional (typst_toml?template) "template";
-
     installPhase = let
       outDir = "$out/lib/typst-local-packages/${finalAttrs.pname}/${finalAttrs.version}";
     in ''
@@ -20,15 +16,6 @@
       runHook preInstall
       mkdir -p ${outDir}
       cp -r . ${outDir}
-    ''
-    # If typst_toml contains "[template]" section,
-    # then compile the template.entrypoint (.typ) to $template/entrypoint (.pdf).
-    + lib.optionalString (typst_toml?template) ''
-      mkdir -p $template
-      ${typst}/bin/typst compile \
-        ${typst_toml.template.path}/${typst_toml.template.entrypoint} \
-        $template/${lib.removeSuffix ".typ" (baseNameOf typst_toml.template.entrypoint)}.pdf
-    '' + ''
       runHook postInstall
     '';
 
@@ -59,6 +46,35 @@
       paths = finalAttrs.propagatedBuildInputs or [] ++ finalAttrs.buildInputs or [];
       includeClosures = true;
       pathsToLink  = [ "/share/fonts" ];
+    };
+
+    # If typst_toml contains "[template]" section,
+    # then add the `template` in passthru.
+    # As a result, user can access template by `<this-drv>.template`.
+    passthru = lib.optionalAttrs (typst_toml?template) {
+      # `template` is a standalone derivation rather than
+      # an output in <this-drv> because: `template` may have a build phase.
+      # For example, `template` may contain draw.io diagrams
+      # that need to be converted to SVG before Typst compile.
+      template = stdenvNoCC.mkDerivation {
+        name = "${finalAttrs.name}-template";
+        inherit (finalAttrs)
+          src
+          shellHook
+          TYPST_PACKAGE_PATH
+          TYPST_IGNORE_SYSTEM_FONTS
+          TYPST_FONT_PATHS
+        ;
+        installPhase = ''
+          ${set-TYPST_ROOT}
+          runHook preInstall
+          mkdir -p $out
+          ${typst}/bin/typst compile \
+          ${typst_toml.template.path}/${typst_toml.template.entrypoint} \
+          $out/${lib.removeSuffix ".typ" (baseNameOf typst_toml.template.entrypoint)}.pdf
+          runHook postInstall
+        '';
+      };
     };
   };
 }
