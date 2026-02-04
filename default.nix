@@ -56,7 +56,7 @@
       # an output in <this-drv> because: `template` may have a build phase.
       # For example, `template` may contain draw.io diagrams
       # that need to be converted to SVG before Typst compile.
-      template = stdenvNoCC.mkDerivation {
+      template = stdenvNoCC.mkDerivation ({
         name = "${finalAttrs.name}-template";
         inherit (finalAttrs)
           src
@@ -74,7 +74,7 @@
           $out/${lib.removeSuffix ".typ" (baseNameOf typst_toml.template.entrypoint)}.pdf
           runHook postInstall
         '';
-      };
+      } // lib.attrByPath ["passthru" "template"] {} prevAttrs);
     };
   };
 }
