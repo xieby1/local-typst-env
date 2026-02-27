@@ -1,11 +1,13 @@
 { lib, stdenvNoCC, buildEnv, typst }: lib.extendMkDerivation {
   constructDrv = stdenvNoCC.mkDerivation;
   extendDrvArgs = finalAttrs: prevAttrs: let
-    typst_toml = lib.importTOML (finalAttrs.src + /typst.toml);
     set-TYPST_ROOT = "export TYPST_ROOT=$(realpath .)";
   in {
-    pname = typst_toml.package.name;
-    version = typst_toml.package.version;
+    typst-toml = prevAttrs.typst-toml or (finalAttrs.src + /typst.toml);
+    passthru.manifest = lib.importTOML finalAttrs.typst-toml;
+
+    pname = finalAttrs.passthru.manifest.package.name;
+    version = finalAttrs.passthru.manifest.package.version;
     name = "typst-local-package-${finalAttrs.pname}-${finalAttrs.version}";
     dontBuild = true;
 
@@ -48,15 +50,15 @@
       pathsToLink  = [ "/share/fonts" ];
     };
 
-    # If typst_toml contains "[template]" section,
+    # If passthru.manifest contains "[template]" section,
     # then add the `template` in passthru.
     # As a result, user can access template by `<this-drv>.template`.
-    passthru = lib.optionalAttrs (typst_toml?template) {
+    passthru.template = lib.optionalDrvAttr (finalAttrs.passthru.manifest?template) (
       # `template` is a standalone derivation rather than
       # an output in <this-drv> because: `template` may have a build phase.
       # For example, `template` may contain draw.io diagrams
       # that need to be converted to SVG before Typst compile.
-      template = stdenvNoCC.mkDerivation ({
+      stdenvNoCC.mkDerivation ({
         name = "${finalAttrs.name}-template";
         inherit (finalAttrs)
           src
@@ -70,11 +72,11 @@
           runHook preInstall
           mkdir -p $out
           ${typst}/bin/typst compile \
-          ${typst_toml.template.path}/${typst_toml.template.entrypoint} \
-          $out/${lib.removeSuffix ".typ" (baseNameOf typst_toml.template.entrypoint)}.pdf
+          ${finalAttrs.passthru.manifest.template.path}/${finalAttrs.passthru.manifest.template.entrypoint} \
+          $out/${lib.removeSuffix ".typ" (baseNameOf finalAttrs.passthru.manifest.template.entrypoint)}.pdf
           runHook postInstall
         '';
-      } // lib.attrByPath ["passthru" "template"] {} prevAttrs);
-    };
+      } // lib.attrByPath ["passthru" "template"] {} prevAttrs)
+    );
   };
 }
